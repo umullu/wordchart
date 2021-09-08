@@ -16,5 +16,6 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core REQUIRED)
 
 add_executable(wordchart
   main.cpp
+  textthread.cpp
 )
 target_link_libraries(wordchart Qt${QT_VERSION_MAJOR}::Core)
