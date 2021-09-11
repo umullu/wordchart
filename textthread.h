@@ -1,19 +1,35 @@
 #ifndef TEXTTHREAD_H
 #define TEXTTHREAD_H
 
-#include <QObject>
+#include <QThread>
+#include <QMutex>
+#include <QWaitCondition>
 
-class TextThread : public QObject
+
+class TextThread : public QThread
 {
     Q_OBJECT
+
 public:
     TextThread(QObject *parent = nullptr);
-    ~TextThread() {};
+    ~TextThread();
 
-    void run();
+    void processText(const QString &fileName);
+    // void getProgress();
 
-//signals:
+signals:
+    void progressChanged(const QStringList &words, const QStringList &values, int progress);
+    void textProcessed();
 
+protected:
+    void run() override;
+
+private:
+    QMutex mutex;
+    QWaitCondition condition;
+    bool abort;
+    //bool timeout;
+    QString fileName;
 };
 
 #endif // TEXTTHREAD_H

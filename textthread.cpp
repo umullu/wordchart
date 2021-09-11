@@ -1,17 +1,48 @@
-#include "textthread.h"
-
 #include <QFile>
 #include <QTextStream>
 #include <QElapsedTimer>
 #include <QRegularExpression>
+#include <QDebug>
 
-TextThread::TextThread(QObject *parent) : QObject(parent)
+#include "textthread.h"
+
+TextThread::TextThread(QObject *parent)
+    : QThread(parent)
 {
+      abort = false;
+      //timeout = false;
 }
+
+TextThread::~TextThread()
+{
+    mutex.lock();
+    abort = true;
+    condition.wakeOne();
+    mutex.unlock();
+
+    wait();
+}
+
+void TextThread::processText(const QString &fileName)
+{
+    QMutexLocker locker(&mutex);
+
+    this->fileName = fileName;
+
+    if (!isRunning())
+        start();
+}
+
+/*
+void TextThread::getProgress()
+{
+    timeout = true;
+}
+*/
 
 void TextThread::run()
 {
-    const int ProgressInterval = 1000;
+    const int ProgressInterval = 200000;
     const int MaxTopItems = 15;
 
     const bool CaseSensitivity = false;
@@ -27,26 +58,26 @@ void TextThread::run()
     QMultiMap<int, QString> top;
     int minCount = 0;
 
-    QFile inFile("in.txt");
-    if (!inFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return;
-    QTextStream inStream(&inFile);
+    QTextStream stream(&file);
 
-    QFile outFile("out.txt");
-    if (!outFile.open(QIODevice::WriteOnly | QIODevice::Text))
-        return;
-    QTextStream outStream(&outFile);
-
-    qint64 fileSize = inFile.size();
+    qint64 fileSize = file.size();
     qint64 prevProcessed = 0;
     qint64 processed = 0;
 
-    QElapsedTimer timer;
-    timer.start();
-    while (!inStream.atEnd()) {
+    //QTimer *timer = new QTimer(this);
+    //connect(timer, &QTimer::timeout, this, &TextThread::getProgress);
+    //timer->start(500);
+
+    QElapsedTimer t;
+    t.start();
+
+    while (!stream.atEnd()) {
 
         QString str;
-        inStream >> str;
+        stream >> str;
 
         // Remove backslashes
         str.remove(QChar('\\'), Qt::CaseInsensitive);
@@ -101,7 +132,8 @@ void TextThread::run()
         }
 
         processed++;
-        if (processed - prevProcessed >= ProgressInterval || inStream.atEnd()) {
+        if (processed - prevProcessed >= ProgressInterval || stream.atEnd()) {
+        //if (timeout || stream.atEnd()) {
             QMap<QString, int> dict;
             QMultiMap<int, QString>::iterator topIter = top.begin();
             while (topIter != top.end()) {
@@ -110,23 +142,25 @@ void TextThread::run()
                 topIter++;
             }
 
-            QString result;
+            QStringList words;
+            QStringList values;
             QMap<QString, int>::iterator dictIter = dict.begin();
             while (dictIter != dict.end()) {
-                result += dictIter.key() + ":" + QString::number(dictIter.value()) + " ";
+                words << dictIter.key();
+                values << QString::number(dictIter.value());
                 dictIter++;
             }
 
-            qint64 pos = inStream.pos();
+            qint64 pos = stream.pos();
             int progress = 100 * pos / fileSize;
-            //QString info = QString::number(progress) + " " + QString::number(fileSize) + " " + QString::number(pos) + " " + QString::number(processed);
-            QString info = QString::number(progress) + " " + QString::number(pos) + " ";
 
-            outStream << info << "  " << result << "\n";
+            emit progressChanged(words, values, progress);
+
             prevProcessed = processed;
+            //timeout = false;
         }
     }
-    outStream << "Process duration: " << QString::number(timer.elapsed()) << " ms\n";
-    outFile.close();
-    inFile.close();
+    file.close();
+    emit textProcessed();
+    qDebug() << "Process duration: " << QString::number(t.elapsed()) << " ms\n";
 }
