@@ -5,8 +5,6 @@ import QtQuick.Layouts 1.3
 import QtQuick.Dialogs 1.2
 import QtCharts 2.3
 
-//import Qt.labs.platform 1.0
-
 Window {
     id: window
     title: "Word bar chart"
@@ -16,7 +14,6 @@ Window {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 10
         RowLayout {
             id: fileLayout
             Layout.margins: 30
@@ -74,11 +71,11 @@ Window {
                 text: "X"
                 onClicked: {
                     thread.cancelProcessing();
-                    barCategoryAxis.categories = [" "];
+                    barCategoryAxis.categories = [];
                     barSet.values = [];
                     barSeries.axisY.min = 0;
                     barSeries.axisY.max = 4;
-                    chart.removeAllSeries();
+                    //chart.removeAllSeries();
                 }
             }
             Connections {

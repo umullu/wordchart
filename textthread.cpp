@@ -206,8 +206,12 @@ void TextThread::run()
             prevProcessed = processed;
             //timeout = false;
         }
-        if (canceled)
+        if (canceled) {
+            mutex.lock();
+            canceled = false;
+            mutex.unlock();
             break;
+        }
     }
     file.close();
     emit textProcessed();
