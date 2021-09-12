@@ -1,19 +1,28 @@
-#include <QCoreApplication>
+#include <QApplication>
+#include <QQmlApplicationEngine>
+#include <QQmlContext>
 
 #include "textthread.h"
-#include "logger.h"
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication app(argc, argv);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
+
+    QApplication app(argc, argv);
 
     TextThread thread;
-    Logger logger;
 
-    QObject::connect(&thread, &TextThread::progressChanged, &logger, &Logger::updateData);
-    QObject::connect(&thread, &TextThread::finished, &app, &QCoreApplication::quit);
-
-    thread.processText("rigveda_.txt");
+    QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("thread", &thread);
+    const QUrl url(QStringLiteral("qrc:/main.qml"));
+    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
+                     &app, [url](QObject *obj, const QUrl &objUrl) {
+        if (!obj && url == objUrl)
+            QCoreApplication::exit(-1);
+    }, Qt::QueuedConnection);
+    engine.load(url);
 
     int res = app.exec();
 

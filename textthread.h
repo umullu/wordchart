@@ -4,21 +4,30 @@
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QVariantMap>
+#include <QUrl>
 
 
 class TextThread : public QThread
 {
     Q_OBJECT
+    Q_PROPERTY(QUrl path WRITE setPath)
+    Q_PROPERTY(int progress READ getProgress NOTIFY dataUpdated)
+    Q_PROPERTY(QVariantMap words READ getWords NOTIFY dataUpdated)
 
 public:
     TextThread(QObject *parent = nullptr);
     ~TextThread();
 
-    void processText(const QString &fileName);
-    // void getProgress();
+    Q_INVOKABLE void processText();
+    Q_INVOKABLE void cancelProcessing();
+    //void updateData();
+    void setPath(const QUrl &path);
+    int getProgress() const;
+    QVariantMap getWords() const;
 
 signals:
-    void progressChanged(const QStringList &words, const QStringList &values, int progress);
+    void dataUpdated();
     void textProcessed();
 
 protected:
@@ -27,9 +36,12 @@ protected:
 private:
     QMutex mutex;
     QWaitCondition condition;
-    bool abort;
+    bool canceled;
+    bool terminated;
     //bool timeout;
-    QString fileName;
+    QUrl path;
+    int progress;
+    QVariantMap words;
 };
 
 #endif // TEXTTHREAD_H
