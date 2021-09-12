@@ -1,10 +1,11 @@
+#include "textthread.h"
+
 #include <QFile>
 #include <QTextStream>
 #include <QElapsedTimer>
 #include <QRegularExpression>
+#include <QtMath>
 #include <QDebug>
-
-#include "textthread.h"
 
 TextThread::TextThread(QObject *parent)
     : QThread(parent)
@@ -57,9 +58,19 @@ int TextThread::getProgress() const
     return progress;
 }
 
-QVariantMap TextThread::getWords() const
+QStringList TextThread::getWords() const
 {
     return words;
+}
+
+QVariantList TextThread::getValues() const
+{
+    return values;
+}
+
+int TextThread::getMaximum() const
+{
+    return maximum;
 }
 
 void TextThread::run()
@@ -161,13 +172,33 @@ void TextThread::run()
             qint64 pos = stream.pos();
             progress = 100 * pos / fileSize;
 
-            words.clear();
+            QMap<QString, int> dict;
             QMultiMap<int, QString>::iterator topIter = top.begin();
             while (topIter != top.end()) {
                 if (topIter.value() > 0)
-                    words.insert(topIter.value(), topIter.key());
+                    dict.insert(topIter.value(), topIter.key());
                 topIter++;
             }
+
+            words.clear();
+            values.clear();
+            QMap<QString, int>::iterator dictIter = dict.begin();
+            while (dictIter != dict.end()) {
+                words << dictIter.key();
+                values <<  dictIter.value();
+                dictIter++;
+            }
+
+            // Define own nice maximum value
+            maximum = top.lastKey();
+            int number = maximum;
+            int i = 0;
+            while (number > 1) {
+                number /= 10;
+                i++;
+            }
+            if (----i > 0)
+                maximum = ((int)(maximum / qPow(10, i)) + 1) * qPow(10, i);
             mutex.unlock();
 
             emit dataUpdated();
@@ -180,6 +211,6 @@ void TextThread::run()
     }
     file.close();
     emit textProcessed();
-    qDebug() << "File size: " << fileSize;
-    qDebug() << "Process duration: " << QString::number(t.elapsed()) << " ms\n";
+    qDebug() << "File size: " << fileSize << " bytes";
+    qDebug() << "Process duration: " << t.elapsed() << " ms";
 }

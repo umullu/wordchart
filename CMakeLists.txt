@@ -11,8 +11,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Core Quick Widgets REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Quick Widgets REQUIRED)
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Core Quick Widgets Charts REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Quick Widgets Charts REQUIRED)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -46,7 +46,7 @@ endif()
 target_compile_definitions(wordchart
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 target_link_libraries(wordchart
-  PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick Qt${QT_VERSION_MAJOR}::Widgets)
+  PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts)
 
 set_target_properties(wordchart PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

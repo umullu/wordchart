@@ -1,8 +1,9 @@
+#include "textthread.h"
+
 #include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
-#include "textthread.h"
 
 int main(int argc, char *argv[])
 {

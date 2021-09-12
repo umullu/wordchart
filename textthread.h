@@ -13,7 +13,9 @@ class TextThread : public QThread
     Q_OBJECT
     Q_PROPERTY(QUrl path WRITE setPath)
     Q_PROPERTY(int progress READ getProgress NOTIFY dataUpdated)
-    Q_PROPERTY(QVariantMap words READ getWords NOTIFY dataUpdated)
+    Q_PROPERTY(QStringList words READ getWords NOTIFY dataUpdated)
+    Q_PROPERTY(QVariantList values READ getValues NOTIFY dataUpdated)
+    Q_PROPERTY(int maximum READ getMaximum NOTIFY dataUpdated)
 
 public:
     TextThread(QObject *parent = nullptr);
@@ -24,7 +26,9 @@ public:
     //void updateData();
     void setPath(const QUrl &path);
     int getProgress() const;
-    QVariantMap getWords() const;
+    QStringList getWords() const;
+    QVariantList getValues() const;
+    int getMaximum() const;
 
 signals:
     void dataUpdated();
@@ -41,7 +45,10 @@ private:
     //bool timeout;
     QUrl path;
     int progress;
-    QVariantMap words;
+    QStringList words;
+    QVariantList values;
+    int maximum;
+
 };
 
 #endif // TEXTTHREAD_H
